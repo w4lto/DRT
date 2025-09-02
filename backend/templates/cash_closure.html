@@ -1,0 +1,19 @@
+<h1>Fechamento de Caixa</h1>
+<p>Período: {{ start_date }} - {{ end_date }}</p>
+<table border="1" cellspacing="0" cellpadding="4">
+  <tr>
+    {% for col in data[0].keys() %}
+      <th>{{ col }}</th>
+    {% endfor %}
+  </tr>
+  {% for row in data %}
+  <tr>
+    {% for v in row.values() %}
+      <td>{{ v }}</td>
+    {% endfor %}
+  </tr>
+  {% endfor %}
+</table>
+<footer>
+  <small>Gerado em: {{ generated_at }}</small>
+</footer>

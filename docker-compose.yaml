@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:14
+    container_name: reports_postgres
+    environment:
+      POSTGRES_USER: superset
+      POSTGRES_PASSWORD: superset
+      POSTGRES_DB: sampledb
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  backend:
+    build: ./backend
+    container_name: reports_backend
+    environment:
+      - DB_NAME=sampledb
+      - DB_USER=superset
+      - DB_PASSWORD=superset
+      - DB_HOST=postgres
+      - DB_PORT=5432
+    depends_on:
+      - postgres
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: reports_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
