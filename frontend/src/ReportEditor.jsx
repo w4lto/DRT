@@ -1,5 +1,8 @@
 import React, { useState } from "react";
 import axios from "axios";
+import QueryBuilder from "./QueryBuilder";
+import ReportDesigner from "./ReportDesigner";
+
 
 export default function ReportEditor({ onSave }) {
   const [name, setName] = useState("");
@@ -22,7 +25,7 @@ export default function ReportEditor({ onSave }) {
       name,
       query,
       template,
-      params
+      params,
     });
     alert("Report saved!");
     if (onSave) onSave();
@@ -32,16 +35,23 @@ export default function ReportEditor({ onSave }) {
     <div>
       <h2>Create/Edit Report</h2>
       <label>Report Name:</label>
-      <input value={name} onChange={e => setName(e.target.value)} />
+      <input value={name} onChange={(e) => setName(e.target.value)} />
       <br />
 
-      <label>SQL Query:</label>
-      <textarea rows="4" cols="60" value={query} onChange={e => setQuery(e.target.value)} />
+      {/* ✅ Place QueryBuilder here so it can call setQuery */}
+      <QueryBuilder onChange={setQuery} />
+
+      <label>SQL Query (preview):</label>
+      <textarea
+        rows="4"
+        cols="60"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+      />
       <br />
 
-      <label>Template (HTML/Jinja2):</label>
-      <textarea rows="6" cols="60" value={template} onChange={e => setTemplate(e.target.value)} />
-      <br />
+     <h3>Report Designer</h3>
+    <ReportDesigner template={template} onChange={setTemplate} />
 
       <h3>Parameters</h3>
       {params.map((p, i) => (
@@ -49,11 +59,11 @@ export default function ReportEditor({ onSave }) {
           <input
             placeholder="Name"
             value={p.name}
-            onChange={e => updateParam(i, "name", e.target.value)}
+            onChange={(e) => updateParam(i, "name", e.target.value)}
           />
           <select
             value={p.type}
-            onChange={e => updateParam(i, "type", e.target.value)}
+            onChange={(e) => updateParam(i, "type", e.target.value)}
           >
             <option value="text">Text</option>
             <option value="date">Date</option>
@@ -63,14 +73,17 @@ export default function ReportEditor({ onSave }) {
             <input
               type="checkbox"
               checked={p.required}
-              onChange={e => updateParam(i, "required", e.target.checked)}
+              onChange={(e) =>
+                updateParam(i, "required", e.target.checked)
+              }
             />
             Required
           </label>
         </div>
       ))}
       <button onClick={addParam}>+ Add Param</button>
-      <br /><br />
+      <br />
+      <br />
 
       <button onClick={saveReport}>Save Report</button>
     </div>
