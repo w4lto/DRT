@@ -2,10 +2,10 @@ import React, { useEffect, useRef } from "react";
 import grapesjs from "grapesjs";
 import "grapesjs/dist/css/grapes.min.css";
 
-import "grapesjs-preset-webpage"; // optional plugins
-import "grapesjs-blocks-basic";
+import gjsPresetWebpage from "grapesjs-preset-webpage";
+import gjsBlocksBasic from "grapesjs-blocks-basic";
 
-export default function ReportDesigner({ template, onChange }) {
+export default function ReportDesigner({ template, onChange, availableFields }) {
   const editorRef = useRef(null);
 
   useEffect(() => {
@@ -13,83 +13,117 @@ export default function ReportDesigner({ template, onChange }) {
       const editor = grapesjs.init({
         container: "#gjs",
         height: "500px",
-        storageManager: false, // don't persist automatically
-        plugins: ["gjs-preset-webpage", "gjs-blocks-basic"],
-        pluginsOpts:{
-            "gjs-preset-webpage": {},
-            "gjs-blocks-basic": {}
+        storageManager: false,
+        fromElement: false,
+        plugins: [gjsPresetWebpage, gjsBlocksBasic],
+        pluginsOpts: {
+          [gjsPresetWebpage]: {},
+          [gjsBlocksBasic]: {},
         },
-        components: template || "<h1>New Report</h1>",
+        panels: {
+          defaults: [
+            {
+              id: "blocks",
+              el: ".panel__blocks",
+              buttons: [
+                {
+                  id: "show-blocks",
+                  active: true,
+                  label: "Blocks",
+                  command: "open-blocks",
+                  togglable: false,
+                },
+              ],
+            },
+          ],
+        },
       });
 
-      editor.BlockManager.add("data-field",{
-        label:"Data field",
+      // 🔹 Register Data Field block
+      editor.BlockManager.add("data-field", {
+        label: "Data Field",
         category: "Dynamic",
-        content:"{{field_name}}"
+        content: { type: "data-field", content: "{{ field }}" },
       });
 
-      editor.DomComponents.addType("text", {
-        model:{
-            defaults:{
-                traits:[
-                    {
-                        type:"select",
-                        label:"Field",
-                        name:"field",
-                        options:[
-                            {id:"produto", name:"Produto"},
-                            {id:"valor_liquido", name:"Valor Líquido"},
-                            {id:"order_date", name:"Data do pedido"}
-                        ]
-                    }
-                ]
-            }
-        },
-        init(){
+      // 🔹 Register Data Field type
+      editor.DomComponents.addType("data-field", {
+        model: {
+          defaults: {
+            tagName: "span",
+            field: "",
+            traits: [
+              {
+                type: "select",
+                label: "Field",
+                name: "field",
+                options: [], // start empty
+              },
+            ],
+          },
+
+          init() {
             this.listenTo(this, "change:field", this.updateField);
-        },
+          },
 
-        updateField() {
+          updateField() {
             const field = this.get("field");
-            this.set("content", `{{${field}}}`);
-        }
+            if (field) {
+              this.set("content", `{{ ${field} }}`);
+            }
+          },
+        },
       });
 
+      // 🔹 Register Data Table block
       editor.BlockManager.add("data-table", {
         label: "Data Table",
         category: "Dynamic",
         content: `
-            <table border="1" style="width:100%">
+          <table border="1" style="width:100%">
             <thead>
-                <tr>
-                <th>Produto</th>
-                <th>Valor Líquido</th>
-                </tr>
+              <tr>${(availableFields || []).map(f => `<th>${f}</th>`).join("")}</tr>
             </thead>
             <tbody>
-                {% for row in data %}
-                <tr>
-                <td>{{ row.produto }}</td>
-                <td>{{ row.valor_liquido }}</td>
-                </tr>
-                {% endfor %}
+              {% for row in data %}
+              <tr>
+                ${(availableFields || [])
+                  .map(f => `<td>{{ row.${f} }}</td>`)
+                  .join("")}
+              </tr>
+              {% endfor %}
             </tbody>
-            </table>
-        `
+          </table>
+        `,
       });
-
 
       editor.on("update", () => {
-        const html = editor.getHtml();
-        onChange(html);
+        onChange(editor.getHtml());
       });
+
       editorRef.current = editor;
     }
   }, []);
 
+  // 🔹 whenever availableFields changes, update the trait options
+  useEffect(() => {
+    const editor = editorRef.current;
+    if (editor && availableFields) {
+      editor.DomComponents.getTypes().forEach(type => {
+        if (type.id === "data-field") {
+          type.model.prototype.defaults.traits[0].options = availableFields.map(f => ({
+            id: f,
+            name: f,
+          }));
+        }
+      });
+    }
+  }, [availableFields]);
+
   return (
-    <div>
-      <div id="gjs"></div>
+    <div style={{ display: "flex" }}>
+      <div className="panel__blocks" style={{ width: "250px" }}></div>
+      <div id="gjs" style={{ flexGrow: 1 }}></div>
     </div>
   );
 }

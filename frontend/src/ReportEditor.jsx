@@ -9,6 +9,7 @@ export default function ReportEditor({ onSave }) {
   const [query, setQuery] = useState("");
   const [template, setTemplate] = useState("<h1>New Report</h1>");
   const [params, setParams] = useState([]);
+  const [columns, setColumns] = useState([]);
 
   const addParam = () => {
     setParams([...params, { name: "", type: "text", required: false }]);
@@ -38,21 +39,13 @@ export default function ReportEditor({ onSave }) {
       <input value={name} onChange={(e) => setName(e.target.value)} />
       <br />
 
-      {/* ✅ Place QueryBuilder here so it can call setQuery */}
-      <QueryBuilder onChange={setQuery} />
-
-      <label>SQL Query (preview):</label>
-      <textarea
-        rows="4"
-        cols="60"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-      />
-      <br />
-
+    <QueryBuilder onChange={setQuery} onColumnsChange={setColumns} />
      <h3>Report Designer</h3>
-    <ReportDesigner template={template} onChange={setTemplate} />
-
+    <ReportDesigner
+          template={template}
+          onChange={setTemplate}
+          availableFields={columns}
+    />
       <h3>Parameters</h3>
       {params.map((p, i) => (
         <div key={i}>

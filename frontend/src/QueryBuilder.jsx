@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function QueryBuilder({ onChange }) {
+export default function QueryBuilder({ onChange, onColumnsChange }) {
   const [table, setTable] = useState("orders");
   const [columns, setColumns] = useState(["produto", "valor_liquido", "order_date"]);
   const [selectedCols, setSelectedCols] = useState(["produto", "valor_liquido"]);
@@ -44,6 +44,9 @@ export default function QueryBuilder({ onChange }) {
   // Notify parent whenever query changes
   React.useEffect(() => {
     onChange(buildSQL());
+    if(onColumnsChange){
+      onColumnsChange(selectedCols)
+    }
   }, [selectedCols, filters]);
 
   return (
